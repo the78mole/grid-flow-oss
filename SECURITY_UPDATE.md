@@ -8,11 +8,12 @@ February 8, 2026
 
 **Updates**: 
 - Initial security fix applied
-- Additional update to Next.js 15.0.8 (14.2.35 was insufficient)
-- **Final update to Next.js 15.2.3** (15.0.8 still had vulnerabilities)
+- Update to Next.js 15.0.8 (14.2.35 was insufficient)
+- Update to Next.js 15.2.3 (15.0.8 had cache poisoning and auth bypass)
+- **CRITICAL: Update to Next.js 15.5.10** (15.2.3 had RCE vulnerability!)
 
 ## Summary
-All identified security vulnerabilities in project dependencies have been patched by updating to the latest secure versions. **CRITICAL**: Multiple iterations were required for Next.js to fully address all DoS and authorization bypass vulnerabilities.
+All identified security vulnerabilities in project dependencies have been patched by updating to the latest secure versions. **CRITICAL**: Multiple iterations were required for Next.js, including addressing a CRITICAL RCE vulnerability in React flight protocol that affected version 15.2.3.
 
 ## Fixed Vulnerabilities
 
@@ -110,11 +111,12 @@ All identified security vulnerabilities in project dependencies have been patche
 ### Breaking Changes
 - **PyTorch 2.6.0**: May have API changes from 2.1.2. Review PyTorch release notes if using advanced features.
 - **NumPy 2.x**: Major version upgrade from 1.x. Most code should work, but test thoroughly.
-- **Next.js 15.2.3**: Major version upgrade from 14.x. Breaking changes include:
+- **Next.js 15.5.10**: Major version upgrade from 14.x. Breaking changes include:
   - React 19 required (upgraded from React 18)
   - Some API changes in App Router
   - Review Next.js 15 migration guide
-  - **Note**: Took 3 iterations to reach fully secure version (14.2.35 → 15.0.8 → 15.2.3)
+  - **CRITICAL**: Took 4 iterations to reach secure version due to RCE vulnerability
+  - **Journey**: 14.2.35 → 15.0.8 → 15.2.3 (RCE!) → 15.5.10 (SECURE)
 - **React 19**: Major version upgrade from React 18. Review React 19 changelog for breaking changes.
 
 ### Testing Required
@@ -195,12 +197,13 @@ docker-compose up -d
 
 ## Notes
 
-1. **PyTorch 2.6.0**: Significant update addressing critical RCE vulnerability. This is the most important security fix.
+1. **PyTorch 2.6.0**: Significant update addressing critical RCE vulnerability.
 2. **python-multipart 0.0.22**: Critical update to prevent arbitrary file writes.
-3. **Next.js 15.2.3**: Required THREE iterations to reach secure version:
-   - 14.1.0 → 14.2.35 (insufficient, still vulnerable to DoS)
+3. **Next.js 15.5.10**: Required FOUR iterations to reach secure version:
+   - 14.1.0 → 14.2.35 (insufficient, DoS vulnerability)
    - 14.2.35 → 15.0.8 (still vulnerable to cache poisoning and auth bypass)
-   - 15.0.8 → 15.2.3 (FINALLY SECURE)
+   - 15.0.8 → 15.2.3 (still vulnerable to **CRITICAL RCE in React flight protocol!**)
+   - 15.2.3 → 15.5.10 (FINALLY SECURE - all vulnerabilities including RCE patched)
 4. **React 19**: Required for Next.js 15. Major version upgrade from React 18.
 5. **Pillow 11.1.0**: Major version upgrade, addresses buffer overflow and includes other security improvements.
 
