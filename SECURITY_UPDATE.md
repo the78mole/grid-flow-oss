@@ -6,8 +6,10 @@ This document tracks the security vulnerabilities that were identified and fixed
 ## Date
 February 8, 2026
 
+**Update**: Additional security fix applied after initial patch
+
 ## Summary
-All identified security vulnerabilities in project dependencies have been patched by updating to the latest secure versions.
+All identified security vulnerabilities in project dependencies have been patched by updating to the latest secure versions. **IMPORTANT**: An additional update was required for Next.js to fully address DoS vulnerabilities.
 
 ## Fixed Vulnerabilities
 
@@ -105,7 +107,11 @@ All identified security vulnerabilities in project dependencies have been patche
 ### Breaking Changes
 - **PyTorch 2.6.0**: May have API changes from 2.1.2. Review PyTorch release notes if using advanced features.
 - **NumPy 2.x**: Major version upgrade from 1.x. Most code should work, but test thoroughly.
-- **Next.js 14.2.35**: Minor updates within 14.x branch, should be backward compatible.
+- **Next.js 15.0.8**: Major version upgrade from 14.x. Breaking changes include:
+  - React 19 required (upgraded from React 18)
+  - Some API changes in App Router
+  - Review Next.js 15 migration guide
+- **React 19**: Major version upgrade from React 18. Review React 19 changelog for breaking changes.
 
 ### Testing Required
 1. Test PyTorch model loading and inference in ai-service
@@ -187,8 +193,9 @@ docker-compose up -d
 
 1. **PyTorch 2.6.0**: Significant update addressing critical RCE vulnerability. This is the most important security fix.
 2. **python-multipart 0.0.22**: Critical update to prevent arbitrary file writes.
-3. **Next.js 14.2.35**: Addresses multiple DoS and authorization bypass issues.
-4. **Pillow 11.1.0**: Major version upgrade, addresses buffer overflow and includes other security improvements.
+3. **Next.js 15.0.8**: Major version upgrade required to fix DoS vulnerability. Version 14.2.35 was insufficient.
+4. **React 19**: Required for Next.js 15. Major version upgrade from React 18.
+5. **Pillow 11.1.0**: Major version upgrade, addresses buffer overflow and includes other security improvements.
 
 ## Future Actions
 
