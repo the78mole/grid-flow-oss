@@ -1,0 +1,78 @@
+version: '3.8'
+
+# Production Docker Compose Configuration
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  postgres:
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  redis:
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  spiff-arena:
+    restart: always
+    environment:
+      SPIFFWORKFLOW_BACKEND_DATABASE_URI: postgresql://spiffworkflow:${SPIFFWORKFLOW_PASSWORD}@postgres:5432/spiffworkflow
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  api-gateway:
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://gridflow:${GRIDFLOW_PASSWORD}@postgres:5432/gridflow
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+      replicas: 2
+
+  ai-service:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  client-web:
+    build:
+      context: ./client-web
+      dockerfile: Dockerfile
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+      replicas: 2
+
+volumes:
+  postgres_data_prod:
+    driver: local
