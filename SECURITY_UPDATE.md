@@ -6,10 +6,13 @@ This document tracks the security vulnerabilities that were identified and fixed
 ## Date
 February 8, 2026
 
-**Update**: Additional security fix applied after initial patch
+**Updates**: 
+- Initial security fix applied
+- Additional update to Next.js 15.0.8 (14.2.35 was insufficient)
+- **Final update to Next.js 15.2.3** (15.0.8 still had vulnerabilities)
 
 ## Summary
-All identified security vulnerabilities in project dependencies have been patched by updating to the latest secure versions. **IMPORTANT**: An additional update was required for Next.js to fully address DoS vulnerabilities.
+All identified security vulnerabilities in project dependencies have been patched by updating to the latest secure versions. **CRITICAL**: Multiple iterations were required for Next.js to fully address all DoS and authorization bypass vulnerabilities.
 
 ## Fixed Vulnerabilities
 
@@ -107,10 +110,11 @@ All identified security vulnerabilities in project dependencies have been patche
 ### Breaking Changes
 - **PyTorch 2.6.0**: May have API changes from 2.1.2. Review PyTorch release notes if using advanced features.
 - **NumPy 2.x**: Major version upgrade from 1.x. Most code should work, but test thoroughly.
-- **Next.js 15.0.8**: Major version upgrade from 14.x. Breaking changes include:
+- **Next.js 15.2.3**: Major version upgrade from 14.x. Breaking changes include:
   - React 19 required (upgraded from React 18)
   - Some API changes in App Router
   - Review Next.js 15 migration guide
+  - **Note**: Took 3 iterations to reach fully secure version (14.2.35 → 15.0.8 → 15.2.3)
 - **React 19**: Major version upgrade from React 18. Review React 19 changelog for breaking changes.
 
 ### Testing Required
@@ -193,7 +197,10 @@ docker-compose up -d
 
 1. **PyTorch 2.6.0**: Significant update addressing critical RCE vulnerability. This is the most important security fix.
 2. **python-multipart 0.0.22**: Critical update to prevent arbitrary file writes.
-3. **Next.js 15.0.8**: Major version upgrade required to fix DoS vulnerability. Version 14.2.35 was insufficient.
+3. **Next.js 15.2.3**: Required THREE iterations to reach secure version:
+   - 14.1.0 → 14.2.35 (insufficient, still vulnerable to DoS)
+   - 14.2.35 → 15.0.8 (still vulnerable to cache poisoning and auth bypass)
+   - 15.0.8 → 15.2.3 (FINALLY SECURE)
 4. **React 19**: Required for Next.js 15. Major version upgrade from React 18.
 5. **Pillow 11.1.0**: Major version upgrade, addresses buffer overflow and includes other security improvements.
 
