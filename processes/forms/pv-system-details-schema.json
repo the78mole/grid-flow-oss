@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PV System Details",
+  "type": "object",
+  "required": ["system_capacity", "installation_address", "installer_name", "installation_date"],
+  "properties": {
+    "system_capacity": {
+      "type": "number",
+      "title": "System Capacity (kWp)",
+      "description": "Total capacity of the PV system in kilowatt-peak",
+      "minimum": 0,
+      "maximum": 30
+    },
+    "installation_address": {
+      "type": "object",
+      "title": "Installation Address",
+      "required": ["street", "city", "postal_code"],
+      "properties": {
+        "street": {
+          "type": "string",
+          "title": "Street Address"
+        },
+        "city": {
+          "type": "string",
+          "title": "City"
+        },
+        "postal_code": {
+          "type": "string",
+          "title": "Postal Code",
+          "pattern": "^[0-9]{5}$"
+        }
+      }
+    },
+    "installer_name": {
+      "type": "string",
+      "title": "Installer Company Name"
+    },
+    "installer_certification": {
+      "type": "string",
+      "title": "Installer Certification Number"
+    },
+    "installation_date": {
+      "type": "string",
+      "title": "Installation Date",
+      "format": "date"
+    },
+    "inverter_model": {
+      "type": "string",
+      "title": "Inverter Model"
+    },
+    "panel_count": {
+      "type": "integer",
+      "title": "Number of Panels",
+      "minimum": 1
+    },
+    "grid_connection_point": {
+      "type": "string",
+      "title": "Grid Connection Point ID"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Additional Notes"
+    }
+  }
+}

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+                  xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core"
+                  id="Definitions_PV_Registration" 
+                  targetNamespace="http://bpmn.io/schema/bpmn" 
+                  exporter="Camunda Modeler" 
+                  exporterVersion="5.0.0">
+  
+  <bpmn:process id="pv_registration_process" name="PV System Registration Process" isExecutable="true">
+    
+    <!-- Start Event -->
+    <bpmn:startEvent id="StartEvent_1" name="Start PV Registration">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <!-- User Task: Enter System Details -->
+    <bpmn:userTask id="Task_EnterDetails" name="Enter PV System Details">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="pv-system-details-schema.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="pv-system-details-ui.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    
+    <!-- User Task: Upload Documents -->
+    <bpmn:userTask id="Task_UploadDocuments" name="Upload Meter Cabinet Photos">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <!-- Service Task: AI Analysis -->
+    <bpmn:serviceTask id="Task_AIAnalysis" name="AI Meter Cabinet Analysis">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http" />
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Exclusive Gateway: Check Compliance -->
+    <bpmn:exclusiveGateway id="Gateway_CheckCompliance" name="Is Compliant?">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_5_Yes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_5_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <!-- User Task: Manual Review (if not compliant) -->
+    <bpmn:userTask id="Task_ManualReview" name="Manual Review Required">
+      <bpmn:incoming>Flow_5_No</bpmn:incoming>
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <!-- Service Task: Submit to VNB -->
+    <bpmn:serviceTask id="Task_SubmitToVNB" name="Submit to Grid Operator (VNB)">
+      <bpmn:incoming>Flow_5_Yes</bpmn:incoming>
+      <bpmn:incoming>Flow_6</bpmn:incoming>
+      <bpmn:outgoing>Flow_7</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http" />
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- User Task: Wait for VNB Approval -->
+    <bpmn:userTask id="Task_WaitApproval" name="Wait for VNB Approval">
+      <bpmn:incoming>Flow_7</bpmn:incoming>
+      <bpmn:outgoing>Flow_8</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <!-- End Event -->
+    <bpmn:endEvent id="EndEvent_1" name="Registration Complete">
+      <bpmn:incoming>Flow_8</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_EnterDetails" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_EnterDetails" targetRef="Task_UploadDocuments" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_UploadDocuments" targetRef="Task_AIAnalysis" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_AIAnalysis" targetRef="Gateway_CheckCompliance" />
+    <bpmn:sequenceFlow id="Flow_5_Yes" name="Yes" sourceRef="Gateway_CheckCompliance" targetRef="Task_SubmitToVNB">
+      <bpmn:conditionExpression>is_compliant == true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_5_No" name="No" sourceRef="Gateway_CheckCompliance" targetRef="Task_ManualReview">
+      <bpmn:conditionExpression>is_compliant == false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_ManualReview" targetRef="Task_SubmitToVNB" />
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="Task_SubmitToVNB" targetRef="Task_WaitApproval" />
+    <bpmn:sequenceFlow id="Flow_8" sourceRef="Task_WaitApproval" targetRef="EndEvent_1" />
+    
+  </bpmn:process>
+  
+  <!-- Diagram Information (optional, for visual representation) -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="pv_registration_process">
+      <!-- Diagram elements would go here -->
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  
+</bpmn:definitions>
