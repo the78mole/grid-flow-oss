@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: gridflow-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gridflow-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: gridflow-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gridflow-network
+
+  # SpiffArena - BPMN Workflow Engine
+  spiff-arena:
+    image: sartography/spiff-arena:latest
+    container_name: gridflow-spiff-arena
+    environment:
+      # Database configuration
+      SPIFFWORKFLOW_BACKEND_DATABASE_URI: postgresql://spiffworkflow:spiffworkflow@postgres:5432/spiffworkflow
+      
+      # Application configuration
+      SPIFFWORKFLOW_BACKEND_URL: http://localhost:8080
+      SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "false"
+      SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "local_development.yml"
+      
+      # Security
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: http://localhost:7000
+      SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND: http://localhost:8080
+      
+      # Connector configuration
+      SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL: http://api-gateway:8000
+    volumes:
+      - ./processes:/app/process_models:rw
+      - spiff_data:/app/data
+    ports:
+      - "8080:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gridflow-network
+    restart: unless-stopped
+
+  # API Gateway - FastAPI
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: gridflow-api-gateway
+    environment:
+      # Database
+      DATABASE_URL: postgresql://gridflow:gridflow@postgres:5432/gridflow
+      
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      
+      # Services
+      SPIFF_ARENA_URL: http://spiff-arena:8000
+      AI_SERVICE_URL: http://ai-service:8001
+      
+      # Security
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-to-a-secure-random-key}
+      
+      # CORS
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8080
+    volumes:
+      - ./api-gateway:/app:rw
+      - ./processes:/app/processes:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gridflow-network
+    restart: unless-stopped
+
+  # AI Service - PyTorch
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: gridflow-ai-service
+    environment:
+      MODEL_PATH: /app/models
+      DEVICE: cpu  # Change to 'cuda' if GPU available
+    volumes:
+      - ./ai-service:/app:rw
+      - ai_models:/app/models
+    ports:
+      - "8001:8001"
+    networks:
+      - gridflow-network
+    restart: unless-stopped
+
+  # Client Web - Next.js
+  client-web:
+    build:
+      context: ./client-web
+      dockerfile: Dockerfile.dev
+    container_name: gridflow-client-web
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_SPIFF_ARENA_URL: http://localhost:8080
+    volumes:
+      - ./client-web:/app:rw
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+    networks:
+      - gridflow-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  spiff_data:
+    driver: local
+  ai_models:
+    driver: local
+
+networks:
+  gridflow-network:
+    driver: bridge
